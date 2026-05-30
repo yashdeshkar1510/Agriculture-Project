@@ -1,4 +1,4 @@
-/* Tailwind handles most of the layout; these input styles keep the form crisp. */
+/* Tailwind handles most of the layout; these input styles keep the weather search crisp. */
 .input-field {
 	width: 100%;
 	border-radius: 1rem;
@@ -26,4 +26,48 @@
 .input-field option {
 	background: #05202d;
 	color: #f8fafc;
+}
+
+@keyframes floatSlow {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+
+	50% {
+		transform: translateY(-18px);
+	}
+}
+
+@keyframes driftSlower {
+	0%,
+	100% {
+		transform: translate3d(0, 0, 0);
+	}
+
+	33% {
+		transform: translate3d(-18px, 20px, 0);
+	}
+
+	66% {
+		transform: translate3d(20px, -12px, 0);
+	}
+}
+
+.animate-float-slow {
+	animation: floatSlow 12s ease-in-out infinite;
+}
+
+.animate-drift-slower {
+	animation: driftSlower 18s ease-in-out infinite;
+}
+
+.trend-bar {
+	min-height: 20px;
+	transition: height 220ms ease, transform 220ms ease, filter 220ms ease;
+}
+
+.trend-bar:hover {
+	transform: scaleY(1.02);
+	filter: saturate(1.1);
 }

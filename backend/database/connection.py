@@ -22,5 +22,9 @@ def get_farm_record_collection():
     return database["farm_records"]
 
 
+def get_weather_history_collection():
+    return database["weather_history"]
+
+
 async def close_mongo_connection():
     mongo_client.close()

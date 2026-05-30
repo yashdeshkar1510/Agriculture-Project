@@ -8,11 +8,13 @@ from backend.database.connection import (
     close_mongo_connection,
     get_farm_record_collection,
     get_farmer_profile_collection,
+    get_weather_history_collection,
     get_user_collection,
 )
 from backend.routes.auth import router as auth_router
 from backend.routes.farmer_profiles import router as farmer_profiles_router
 from backend.routes.farm_records import router as farm_records_router
+from backend.routes.weather import router as weather_router
 
 
 def _cors_origins() -> list[str]:
@@ -26,6 +28,8 @@ async def lifespan(app: FastAPI):
         await get_user_collection().create_index("email", unique=True)
         await get_farmer_profile_collection().create_index("aadhaar_number", unique=True)
         await get_farm_record_collection().create_index("crop_name")
+        await get_weather_history_collection().create_index("query_location")
+        await get_weather_history_collection().create_index("fetched_at")
     except Exception as error:
         print(f"MongoDB index setup skipped: {error}")
 
@@ -51,6 +55,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(farmer_profiles_router)
 app.include_router(farm_records_router)
+app.include_router(weather_router)
 
 
 @app.get("/")
