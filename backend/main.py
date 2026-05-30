@@ -4,8 +4,13 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.database.connection import close_mongo_connection, get_user_collection
+from backend.database.connection import (
+    close_mongo_connection,
+    get_farmer_profile_collection,
+    get_user_collection,
+)
 from backend.routes.auth import router as auth_router
+from backend.routes.farmer_profiles import router as farmer_profiles_router
 
 
 def _cors_origins() -> list[str]:
@@ -17,6 +22,7 @@ def _cors_origins() -> list[str]:
 async def lifespan(app: FastAPI):
     try:
         await get_user_collection().create_index("email", unique=True)
+        await get_farmer_profile_collection().create_index("aadhaar_number", unique=True)
     except Exception as error:
         print(f"MongoDB index setup skipped: {error}")
 
@@ -26,7 +32,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Agro Platform Authentication API",
+    title="Agro Platform API",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -40,11 +46,12 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(farmer_profiles_router)
 
 
 @app.get("/")
 async def root():
-    return {"message": "Agro Platform authentication API is running."}
+    return {"message": "Agro Platform API is running."}
 
 
 @app.get("/health")

@@ -1,1 +1,29 @@
 /* Tailwind handles the visual styling for the landing page. */
+.input-field {
+	width: 100%;
+	border-radius: 1rem;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.05);
+	padding: 0.95rem 1rem;
+	color: #f8fafc;
+	outline: none;
+	transition:
+		border-color 0.2s ease,
+		background-color 0.2s ease,
+		box-shadow 0.2s ease;
+}
+
+.input-field::placeholder {
+	color: #64748b;
+}
+
+.input-field:focus {
+	border-color: rgba(52, 211, 153, 0.55);
+	background: rgba(255, 255, 255, 0.08);
+	box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1);
+}
+
+.input-field option {
+	background: #05202d;
+	color: #f8fafc;
+}
