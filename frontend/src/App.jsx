@@ -1,94 +1,101 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowRight,
-  Building2,
+  BarChart3,
   CheckCircle2,
+  CircleDollarSign,
   Eye,
   Landmark,
+  Leaf,
+  LineChart,
   LoaderCircle,
-  MapPin,
   PencilLine,
-  Phone,
   ShieldCheck,
   Trash2,
-  UserRound,
   Wheat,
-  LandPlot,
+  Building2,
+  MapPin,
 } from 'lucide-react'
 import './App.css'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
+const steps = [
+  { id: 1, title: 'Crop Details' },
+  { id: 2, title: 'Production Data' },
+  { id: 3, title: 'Income & Review' },
+]
+
 const initialFormState = {
-  farmerName: '',
-  age: '',
-  gender: 'Male',
-  aadhaarNumber: '',
-  mobileNumber: '',
-  state: '',
-  district: '',
-  village: '',
-  totalLandHolding: '',
-  irrigationAvailability: 'Available',
-  farmingExperience: '',
+  cropName: '',
+  cropSeason: '',
+  areaCultivated: '',
+  soilType: '',
+  previousYield: '',
+  currentYield: '',
+  fertilizerUsage: '',
+  irrigationSource: '',
+  pestIncidents: '',
+  annualFarmIncome: '',
 }
 
 const initialErrors = {
-  farmerName: '',
-  age: '',
-  gender: '',
-  aadhaarNumber: '',
-  mobileNumber: '',
-  state: '',
-  district: '',
-  village: '',
-  totalLandHolding: '',
-  irrigationAvailability: '',
-  farmingExperience: '',
+  cropName: '',
+  cropSeason: '',
+  areaCultivated: '',
+  soilType: '',
+  previousYield: '',
+  currentYield: '',
+  fertilizerUsage: '',
+  irrigationSource: '',
+  pestIncidents: '',
+  annualFarmIncome: '',
 }
 
-const genderOptions = ['Male', 'Female', 'Other']
-const irrigationOptions = ['Available', 'Partial', 'Not Available']
-
 function App() {
-  const [profiles, setProfiles] = useState([])
-  const [selectedProfile, setSelectedProfile] = useState(null)
+  const [records, setRecords] = useState([])
+  const [selectedRecord, setSelectedRecord] = useState(null)
   const [formMode, setFormMode] = useState('create')
+  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState(initialFormState)
   const [errors, setErrors] = useState(initialErrors)
   const [loadingList, setLoadingList] = useState(true)
-  const [loadingProfile, setLoadingProfile] = useState(false)
+  const [loadingRecord, setLoadingRecord] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState('')
   const [notice, setNotice] = useState('')
   const [noticeType, setNoticeType] = useState('idle')
 
-  const totalLand = useMemo(
-    () => profiles.reduce((sum, profile) => sum + Number(profile.totalLandHolding || 0), 0),
-    [profiles],
-  )
+  const stats = useMemo(() => {
+    const totalArea = records.reduce((sum, record) => sum + Number(record.areaCultivated || 0), 0)
+    const totalIncome = records.reduce((sum, record) => sum + Number(record.annualFarmIncome || 0), 0)
+    const averageYieldChange = records.length
+      ? records.reduce((sum, record) => sum + Number(record.yieldChange || 0), 0) / records.length
+      : 0
 
-  const averageAge = useMemo(() => {
-    if (!profiles.length) return 0
-    const sum = profiles.reduce((accumulator, profile) => accumulator + Number(profile.age || 0), 0)
-    return Math.round(sum / profiles.length)
-  }, [profiles])
+    return [
+      { label: 'Records', value: records.length },
+      { label: 'Total Area', value: totalArea.toFixed(1) },
+      { label: 'Annual Income', value: totalIncome.toFixed(0) },
+      { label: 'Avg Yield Change', value: averageYieldChange.toFixed(1) },
+    ]
+  }, [records])
 
-  const loadProfiles = async () => {
+  const loadRecords = async () => {
     setLoadingList(true)
     setNotice('')
 
     try {
-      const response = await fetch(`${API_BASE_URL}/farmers`)
+      const response = await fetch(`${API_BASE_URL}/farm-records`)
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Unable to load farmer profiles.')
+        throw new Error(data.detail || 'Unable to load farm records.')
       }
 
-      setProfiles(data)
-      setSelectedProfile((currentSelected) => {
-        if (currentSelected && data.some((profile) => profile.id === currentSelected.id)) {
+      setRecords(data)
+      setSelectedRecord((currentSelected) => {
+        if (currentSelected && data.some((record) => record.id === currentSelected.id)) {
           return currentSelected
         }
         return data[0] ?? null
@@ -102,62 +109,8 @@ function App() {
   }
 
   useEffect(() => {
-    void Promise.resolve().then(() => loadProfiles())
+    void Promise.resolve().then(() => loadRecords())
   }, [])
-
-  const validate = () => {
-    const nextErrors = { ...initialErrors }
-
-    if (formData.farmerName.trim().length < 3) {
-      nextErrors.farmerName = 'Farmer name is required.'
-    }
-
-    const age = Number(formData.age)
-    if (!Number.isInteger(age) || age < 18 || age > 100) {
-      nextErrors.age = 'Age must be an integer between 18 and 100.'
-    }
-
-    if (!formData.gender) {
-      nextErrors.gender = 'Select a gender.'
-    }
-
-    if (!/^\d{12}$/.test(formData.aadhaarNumber.trim())) {
-      nextErrors.aadhaarNumber = 'Aadhaar number must contain exactly 12 digits.'
-    }
-
-    if (!/^\d{7,15}$/.test(formData.mobileNumber.trim())) {
-      nextErrors.mobileNumber = 'Mobile number must contain 7 to 15 digits.'
-    }
-
-    if (formData.state.trim().length < 2) {
-      nextErrors.state = 'State is required.'
-    }
-
-    if (formData.district.trim().length < 2) {
-      nextErrors.district = 'District is required.'
-    }
-
-    if (formData.village.trim().length < 2) {
-      nextErrors.village = 'Village is required.'
-    }
-
-    const landHolding = Number(formData.totalLandHolding)
-    if (!Number.isFinite(landHolding) || landHolding <= 0) {
-      nextErrors.totalLandHolding = 'Total land holding must be a positive number.'
-    }
-
-    if (!formData.irrigationAvailability) {
-      nextErrors.irrigationAvailability = 'Select irrigation availability.'
-    }
-
-    const experience = Number(formData.farmingExperience)
-    if (!Number.isInteger(experience) || experience < 0 || experience > 80) {
-      nextErrors.farmingExperience = 'Farming experience must be a whole number between 0 and 80.'
-    }
-
-    setErrors(nextErrors)
-    return !Object.values(nextErrors).some(Boolean)
-  }
 
   const updateField = (field, value) => {
     setFormData((current) => ({ ...current, [field]: value }))
@@ -165,61 +118,135 @@ function App() {
     setNotice('')
   }
 
+  const validateStep = (step) => {
+    const nextErrors = { ...initialErrors }
+
+    if (step === 1 || step === 3) {
+      if (formData.cropName.trim().length < 2) {
+        nextErrors.cropName = 'Crop name is required.'
+      }
+
+      if (formData.cropSeason.trim().length < 2) {
+        nextErrors.cropSeason = 'Crop season is required.'
+      }
+
+      const areaCultivated = Number(formData.areaCultivated)
+      if (!Number.isFinite(areaCultivated) || areaCultivated <= 0) {
+        nextErrors.areaCultivated = 'Area cultivated must be a positive number.'
+      }
+
+      if (formData.soilType.trim().length < 2) {
+        nextErrors.soilType = 'Soil type is required.'
+      }
+    }
+
+    if (step === 2 || step === 3) {
+      const previousYield = Number(formData.previousYield)
+      const currentYield = Number(formData.currentYield)
+
+      if (!Number.isFinite(previousYield) || previousYield < 0) {
+        nextErrors.previousYield = 'Previous yield must be zero or more.'
+      }
+
+      if (!Number.isFinite(currentYield) || currentYield < 0) {
+        nextErrors.currentYield = 'Current yield must be zero or more.'
+      }
+
+      if (formData.fertilizerUsage.trim().length < 2) {
+        nextErrors.fertilizerUsage = 'Fertilizer usage is required.'
+      }
+
+      if (formData.irrigationSource.trim().length < 2) {
+        nextErrors.irrigationSource = 'Irrigation source is required.'
+      }
+    }
+
+    if (step === 3) {
+      const pestIncidents = Number(formData.pestIncidents)
+      const annualFarmIncome = Number(formData.annualFarmIncome)
+
+      if (!Number.isInteger(pestIncidents) || pestIncidents < 0) {
+        nextErrors.pestIncidents = 'Pest incidents must be a whole number of zero or more.'
+      }
+
+      if (!Number.isFinite(annualFarmIncome) || annualFarmIncome < 0) {
+        nextErrors.annualFarmIncome = 'Annual farm income must be zero or more.'
+      }
+    }
+
+    setErrors(nextErrors)
+    return !Object.values(nextErrors).some(Boolean)
+  }
+
+  const goNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((step) => Math.min(step + 1, 3))
+    } else {
+      setNoticeType('error')
+      setNotice('Please complete the required fields before continuing.')
+    }
+  }
+
+  const goBack = () => {
+    setCurrentStep((step) => Math.max(step - 1, 1))
+  }
+
   const resetForm = () => {
     setFormMode('create')
     setFormData(initialFormState)
     setErrors(initialErrors)
-    setSelectedProfile(null)
-    setNotice('Ready to create a new farmer profile.')
+    setSelectedRecord(null)
+    setCurrentStep(1)
+    setNotice('Ready to create a new farm record.')
     setNoticeType('success')
   }
 
-  const fillFormForEdit = (profile) => {
+  const fillFormForEdit = (record) => {
     setFormMode('edit')
-    setSelectedProfile(profile)
+    setSelectedRecord(record)
+    setCurrentStep(1)
     setFormData({
-      farmerName: profile.farmerName,
-      age: String(profile.age),
-      gender: profile.gender,
-      aadhaarNumber: profile.aadhaarNumber,
-      mobileNumber: profile.mobileNumber,
-      state: profile.state,
-      district: profile.district,
-      village: profile.village,
-      totalLandHolding: String(profile.totalLandHolding),
-      irrigationAvailability: profile.irrigationAvailability,
-      farmingExperience: String(profile.farmingExperience),
+      cropName: record.cropName,
+      cropSeason: record.cropSeason,
+      areaCultivated: String(record.areaCultivated),
+      soilType: record.soilType,
+      previousYield: String(record.previousYield),
+      currentYield: String(record.currentYield),
+      fertilizerUsage: record.fertilizerUsage,
+      irrigationSource: record.irrigationSource,
+      pestIncidents: String(record.pestIncidents),
+      annualFarmIncome: String(record.annualFarmIncome),
     })
     setErrors(initialErrors)
-    setNotice('Edit mode enabled for the selected farmer profile.')
+    setNotice('Edit mode enabled for the selected farm record.')
     setNoticeType('success')
   }
 
-  const openProfile = async (profileId) => {
-    setLoadingProfile(true)
+  const viewRecord = async (recordId) => {
+    setLoadingRecord(true)
     setNotice('')
 
     try {
-      const response = await fetch(`${API_BASE_URL}/farmers/${profileId}`)
+      const response = await fetch(`${API_BASE_URL}/farm-records/${recordId}`)
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Unable to load the selected profile.')
+        throw new Error(data.detail || 'Unable to load the selected record.')
       }
 
-      setSelectedProfile(data)
+      setSelectedRecord(data)
     } catch (error) {
       setNoticeType('error')
       setNotice(error.message)
     } finally {
-      setLoadingProfile(false)
+      setLoadingRecord(false)
     }
   }
 
-  const submitProfile = async (event) => {
+  const submitRecord = async (event) => {
     event.preventDefault()
 
-    if (!validate()) {
+    if (!validateStep(3)) {
       setNoticeType('error')
       setNotice('Please fix the highlighted fields before saving.')
       return
@@ -229,22 +256,21 @@ function App() {
     setNotice('')
 
     const payload = {
-      farmerName: formData.farmerName.trim(),
-      age: Number(formData.age),
-      gender: formData.gender,
-      aadhaarNumber: formData.aadhaarNumber.trim(),
-      mobileNumber: formData.mobileNumber.trim(),
-      state: formData.state.trim(),
-      district: formData.district.trim(),
-      village: formData.village.trim(),
-      totalLandHolding: Number(formData.totalLandHolding),
-      irrigationAvailability: formData.irrigationAvailability,
-      farmingExperience: Number(formData.farmingExperience),
+      cropName: formData.cropName.trim(),
+      cropSeason: formData.cropSeason.trim(),
+      areaCultivated: Number(formData.areaCultivated),
+      soilType: formData.soilType.trim(),
+      previousYield: Number(formData.previousYield),
+      currentYield: Number(formData.currentYield),
+      fertilizerUsage: formData.fertilizerUsage.trim(),
+      irrigationSource: formData.irrigationSource.trim(),
+      pestIncidents: Number(formData.pestIncidents),
+      annualFarmIncome: Number(formData.annualFarmIncome),
     }
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/farmers${formMode === 'edit' && selectedProfile ? `/${selectedProfile.id}` : ''}`,
+        `${API_BASE_URL}/farm-records${formMode === 'edit' && selectedRecord ? `/${selectedRecord.id}` : ''}`,
         {
           method: formMode === 'edit' ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -253,20 +279,18 @@ function App() {
       )
 
       const data = await response.json()
+
       if (!response.ok) {
-        throw new Error(data.detail || 'Unable to save farmer profile.')
+        throw new Error(data.detail || 'Unable to save farm record.')
       }
 
       setNoticeType('success')
-      setNotice(
-        formMode === 'edit'
-          ? 'Farmer profile updated successfully.'
-          : 'Farmer profile created successfully.',
-      )
-      setSelectedProfile(data)
+      setNotice(formMode === 'edit' ? 'Farm record updated successfully.' : 'Farm record created successfully.')
+      setSelectedRecord(data)
       setFormData(initialFormState)
       setFormMode('create')
-      await loadProfiles()
+      setCurrentStep(1)
+      await loadRecords()
     } catch (error) {
       setNoticeType('error')
       setNotice(error.message)
@@ -275,33 +299,31 @@ function App() {
     }
   }
 
-  const deleteProfile = async (profile) => {
-    const shouldDelete = window.confirm(
-      `Delete profile for ${profile.farmerName}? This cannot be undone.`,
-    )
+  const deleteRecord = async (record) => {
+    const shouldDelete = window.confirm(`Delete record for ${record.cropName}? This cannot be undone.`)
     if (!shouldDelete) return
 
-    setDeletingId(profile.id)
+    setDeletingId(record.id)
     setNotice('')
 
     try {
-      const response = await fetch(`${API_BASE_URL}/farmers/${profile.id}`, {
+      const response = await fetch(`${API_BASE_URL}/farm-records/${record.id}`, {
         method: 'DELETE',
       })
 
       if (response.status !== 204) {
         const data = await response.json()
         if (!response.ok) {
-          throw new Error(data.detail || 'Unable to delete profile.')
+          throw new Error(data.detail || 'Unable to delete farm record.')
         }
       }
 
       setNoticeType('success')
-      setNotice('Farmer profile deleted successfully.')
-      if (selectedProfile?.id === profile.id) {
-        setSelectedProfile(null)
+      setNotice('Farm record deleted successfully.')
+      if (selectedRecord?.id === record.id) {
+        setSelectedRecord(null)
       }
-      await loadProfiles()
+      await loadRecords()
     } catch (error) {
       setNoticeType('error')
       setNotice(error.message)
@@ -327,22 +349,18 @@ function App() {
                 <p className="text-sm font-semibold uppercase tracking-[0.35em] text-emerald-300">
                   Agro Platform
                 </p>
-                <p className="text-sm text-slate-300">Farmer profile management</p>
+                <p className="text-sm text-slate-300">Farm data collection module</p>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[520px]">
+            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[480px]">
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Profiles</p>
-                <p className="mt-1 text-2xl font-semibold text-white">{profiles.length}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Records</p>
+                <p className="mt-1 text-2xl font-semibold text-white">{records.length}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Avg age</p>
-                <p className="mt-1 text-2xl font-semibold text-white">{averageAge || '0'}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total land</p>
-                <p className="mt-1 text-2xl font-semibold text-white">{totalLand.toFixed(1)}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Current Step</p>
+                <p className="mt-1 text-2xl font-semibold text-white">{currentStep}</p>
               </div>
             </div>
           </div>
@@ -353,26 +371,26 @@ function App() {
             <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-200">
-                  <Wheat className="h-4 w-4" />
-                  Create, edit, view, and delete farmer records
+                  <Leaf className="h-4 w-4" />
+                  Multi-step record entry for farm data
                 </div>
 
                 <div className="space-y-4">
                   <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                    Farmer profile records with responsive CRUD controls.
+                    Capture farm data with a clean, responsive workflow.
                   </h1>
                   <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                    Manage Aadhaar-backed farmer profiles, keep field data current, and review all
-                    records from one mobile-friendly interface.
+                    Collect crop and income details, save records to MongoDB, edit updates as fields
+                    change, and review all farm analytics from one dashboard.
                   </p>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   {[
-                    'Responsive form UI',
-                    'Loading and error states',
-                    'MongoDB-backed CRUD API',
-                    'Fast edit and delete actions',
+                    'Multi-step form navigation',
+                    'Form validation on every step',
+                    'Create, update, view, and delete records',
+                    'Responsive dashboard cards',
                   ].map((item) => (
                     <div
                       key={item}
@@ -396,6 +414,15 @@ function App() {
                   </div>
                 )}
 
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {stats.map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.label}</p>
+                      <p className="mt-2 text-2xl font-semibold text-white">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+
                 <div className="grid gap-4 sm:grid-cols-3">
                   <button
                     type="button"
@@ -403,21 +430,21 @@ function App() {
                     className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
                     <ArrowRight className="h-4 w-4 rotate-180" />
-                    New Profile
+                    New Record
                   </button>
                   <button
                     type="button"
-                    onClick={loadProfiles}
+                    onClick={loadRecords}
                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-blue-500 px-5 py-4 text-sm font-semibold text-slate-950 shadow-lg shadow-blue-500/20 transition hover:scale-[1.01]"
                   >
-                    <Landmark className="h-4 w-4" />
-                    Refresh List
+                    <LineChart className="h-4 w-4" />
+                    Refresh Dashboard
                   </button>
                   <button
                     type="button"
-                    onClick={() => selectedProfile && fillFormForEdit(selectedProfile)}
+                    onClick={() => selectedRecord && fillFormForEdit(selectedRecord)}
                     className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!selectedProfile}
+                    disabled={!selectedRecord}
                   >
                     <PencilLine className="h-4 w-4" />
                     Edit Selected
@@ -428,205 +455,242 @@ function App() {
               <div className="grid gap-6">
                 <form
                   className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5 shadow-lg shadow-black/15 sm:p-6"
-                  onSubmit={submitProfile}
+                  onSubmit={submitRecord}
                 >
                   <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
                     <div>
                       <p className="text-sm uppercase tracking-[0.25em] text-slate-400">
-                        {formMode === 'edit' ? 'Edit profile' : 'Create profile'}
+                        {formMode === 'edit' ? 'Edit record' : 'Create record'}
                       </p>
-                      <h2 className="mt-1 text-2xl font-semibold text-white">
-                        Farmer information form
-                      </h2>
+                      <h2 className="mt-1 text-2xl font-semibold text-white">Farm record form</h2>
                     </div>
                     <div className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-200">
-                      {formMode === 'edit' ? 'Updating' : 'Creating'}
+                      Step {currentStep} of {steps.length}
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                    <Field label="Farmer Name" error={errors.farmerName} icon={UserRound}>
-                      <input
-                        value={formData.farmerName}
-                        onChange={(event) => updateField('farmerName', event.target.value)}
-                        className="input-field"
-                        placeholder="Enter farmer name"
-                      />
-                    </Field>
-
-                    <Field label="Age" error={errors.age} icon={ShieldCheck}>
-                      <input
-                        type="number"
-                        value={formData.age}
-                        onChange={(event) => updateField('age', event.target.value)}
-                        className="input-field"
-                        placeholder="18"
-                      />
-                    </Field>
-
-                    <Field label="Gender" error={errors.gender} icon={UserRound}>
-                      <select
-                        value={formData.gender}
-                        onChange={(event) => updateField('gender', event.target.value)}
-                        className="input-field"
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    {steps.map((step) => (
+                      <button
+                        key={step.id}
+                        type="button"
+                        onClick={() => setCurrentStep(step.id)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                          currentStep === step.id
+                            ? 'bg-white text-slate-950'
+                            : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                        }`}
                       >
-                        {genderOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-
-                    <Field label="Aadhaar Number" error={errors.aadhaarNumber} icon={Landmark}>
-                      <input
-                        value={formData.aadhaarNumber}
-                        onChange={(event) => updateField('aadhaarNumber', event.target.value)}
-                        className="input-field"
-                        placeholder="12-digit Aadhaar"
-                      />
-                    </Field>
-
-                    <Field label="Mobile Number" error={errors.mobileNumber} icon={Phone}>
-                      <input
-                        value={formData.mobileNumber}
-                        onChange={(event) => updateField('mobileNumber', event.target.value)}
-                        className="input-field"
-                        placeholder="Mobile number"
-                      />
-                    </Field>
-
-                    <Field label="State" error={errors.state} icon={MapPin}>
-                      <input
-                        value={formData.state}
-                        onChange={(event) => updateField('state', event.target.value)}
-                        className="input-field"
-                        placeholder="State"
-                      />
-                    </Field>
-
-                    <Field label="District" error={errors.district} icon={MapPin}>
-                      <input
-                        value={formData.district}
-                        onChange={(event) => updateField('district', event.target.value)}
-                        className="input-field"
-                        placeholder="District"
-                      />
-                    </Field>
-
-                    <Field label="Village" error={errors.village} icon={MapPin}>
-                      <input
-                        value={formData.village}
-                        onChange={(event) => updateField('village', event.target.value)}
-                        className="input-field"
-                        placeholder="Village"
-                      />
-                    </Field>
-
-                    <Field
-                      label="Total Land Holding"
-                      error={errors.totalLandHolding}
-                      icon={LandPlot}
-                    >
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={formData.totalLandHolding}
-                        onChange={(event) => updateField('totalLandHolding', event.target.value)}
-                        className="input-field"
-                        placeholder="Acres or hectares"
-                      />
-                    </Field>
-
-                    <Field
-                      label="Irrigation Availability"
-                      error={errors.irrigationAvailability}
-                      icon={Building2}
-                    >
-                      <select
-                        value={formData.irrigationAvailability}
-                        onChange={(event) =>
-                          updateField('irrigationAvailability', event.target.value)
-                        }
-                        className="input-field"
-                      >
-                        {irrigationOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-
-                    <Field
-                      label="Farming Experience"
-                      error={errors.farmingExperience}
-                      icon={Wheat}
-                    >
-                      <input
-                        type="number"
-                        value={formData.farmingExperience}
-                        onChange={(event) => updateField('farmingExperience', event.target.value)}
-                        className="input-field"
-                        placeholder="Years"
-                      />
-                    </Field>
+                        {step.title}
+                      </button>
+                    ))}
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-blue-500 px-5 py-4 text-sm font-semibold text-slate-950 shadow-lg shadow-blue-500/20 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {submitting ? (
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    {currentStep === 1 && (
                       <>
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                        Saving Profile...
-                      </>
-                    ) : formMode === 'edit' ? (
-                      <>
-                        <PencilLine className="h-4 w-4" />
-                        Update Profile
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRight className="h-4 w-4" />
-                        Create Profile
+                        <Field label="Crop Name" error={errors.cropName} icon={Wheat}>
+                          <input
+                            value={formData.cropName}
+                            onChange={(event) => updateField('cropName', event.target.value)}
+                            className="input-field"
+                            placeholder="Enter crop name"
+                          />
+                        </Field>
+
+                        <Field label="Crop Season" error={errors.cropSeason} icon={Leaf}>
+                          <input
+                            value={formData.cropSeason}
+                            onChange={(event) => updateField('cropSeason', event.target.value)}
+                            className="input-field"
+                            placeholder="Kharif, Rabi, Zaid"
+                          />
+                        </Field>
+
+                        <Field label="Area Cultivated" error={errors.areaCultivated} icon={MapPin}>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={formData.areaCultivated}
+                            onChange={(event) => updateField('areaCultivated', event.target.value)}
+                            className="input-field"
+                            placeholder="Area in acres/hectares"
+                          />
+                        </Field>
+
+                        <Field label="Soil Type" error={errors.soilType} icon={Building2}>
+                          <input
+                            value={formData.soilType}
+                            onChange={(event) => updateField('soilType', event.target.value)}
+                            className="input-field"
+                            placeholder="Clay, loam, sandy, etc."
+                          />
+                        </Field>
                       </>
                     )}
-                  </button>
+
+                    {currentStep === 2 && (
+                      <>
+                        <Field label="Previous Yield" error={errors.previousYield} icon={BarChart3}>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={formData.previousYield}
+                            onChange={(event) => updateField('previousYield', event.target.value)}
+                            className="input-field"
+                            placeholder="Last season yield"
+                          />
+                        </Field>
+
+                        <Field label="Current Yield" error={errors.currentYield} icon={BarChart3}>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={formData.currentYield}
+                            onChange={(event) => updateField('currentYield', event.target.value)}
+                            className="input-field"
+                            placeholder="Current season yield"
+                          />
+                        </Field>
+
+                        <Field label="Fertilizer Usage" error={errors.fertilizerUsage} icon={CircleDollarSign}>
+                          <input
+                            value={formData.fertilizerUsage}
+                            onChange={(event) => updateField('fertilizerUsage', event.target.value)}
+                            className="input-field"
+                            placeholder="Type or amount used"
+                          />
+                        </Field>
+
+                        <Field label="Irrigation Source" error={errors.irrigationSource} icon={Building2}>
+                          <input
+                            value={formData.irrigationSource}
+                            onChange={(event) => updateField('irrigationSource', event.target.value)}
+                            className="input-field"
+                            placeholder="Canal, borewell, rainfed, etc."
+                          />
+                        </Field>
+                      </>
+                    )}
+
+                    {currentStep === 3 && (
+                      <>
+                        <Field label="Pest Incidents" error={errors.pestIncidents} icon={ShieldCheck}>
+                          <input
+                            type="number"
+                            value={formData.pestIncidents}
+                            onChange={(event) => updateField('pestIncidents', event.target.value)}
+                            className="input-field"
+                            placeholder="0"
+                          />
+                        </Field>
+
+                        <Field label="Annual Farm Income" error={errors.annualFarmIncome} icon={LineChart}>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={formData.annualFarmIncome}
+                            onChange={(event) => updateField('annualFarmIncome', event.target.value)}
+                            className="input-field"
+                            placeholder="Total annual income"
+                          />
+                        </Field>
+
+                        <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-sm font-semibold text-white">Review Summary</p>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            {[
+                              ['Crop', formData.cropName || 'Not set'],
+                              ['Season', formData.cropSeason || 'Not set'],
+                              ['Area', formData.areaCultivated || 'Not set'],
+                              ['Income', formData.annualFarmIncome || 'Not set'],
+                            ].map(([label, value]) => (
+                              <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+                                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{label}</p>
+                                <p className="mt-1 text-sm font-semibold text-white">{value}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                    {currentStep > 1 ? (
+                      <button
+                        type="button"
+                        onClick={goBack}
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                      >
+                        Back
+                      </button>
+                    ) : null}
+
+                    {currentStep < 3 ? (
+                      <button
+                        type="button"
+                        onClick={goNext}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-blue-500 px-5 py-4 text-sm font-semibold text-slate-950 shadow-lg shadow-blue-500/20 transition hover:scale-[1.01]"
+                      >
+                        Continue
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-blue-500 px-5 py-4 text-sm font-semibold text-slate-950 shadow-lg shadow-blue-500/20 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {submitting ? (
+                          <>
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                            Saving Record...
+                          </>
+                        ) : formMode === 'edit' ? (
+                          <>
+                            <PencilLine className="h-4 w-4" />
+                            Update Record
+                          </>
+                        ) : (
+                          <>
+                            <ArrowRight className="h-4 w-4" />
+                            Save Record
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </form>
 
                 <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5 shadow-lg shadow-black/15 sm:p-6">
                   <div className="flex items-center justify-between border-b border-white/10 pb-4">
                     <div>
-                      <p className="text-sm uppercase tracking-[0.25em] text-slate-400">
-                        Selected profile
-                      </p>
+                      <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Selected record</p>
                       <h2 className="mt-1 text-2xl font-semibold text-white">View details</h2>
                     </div>
-                    {loadingProfile ? (
+                    {loadingRecord ? (
                       <LoaderCircle className="h-5 w-5 animate-spin text-emerald-300" />
                     ) : (
                       <Eye className="h-5 w-5 text-emerald-300" />
                     )}
                   </div>
 
-                  {selectedProfile ? (
+                  {selectedRecord ? (
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">
                       {[
-                        ['Farmer', selectedProfile.farmerName],
-                        ['Age', selectedProfile.age],
-                        ['Gender', selectedProfile.gender],
-                        ['Aadhaar', selectedProfile.aadhaarNumber],
-                        ['Mobile', selectedProfile.mobileNumber],
-                        ['State', selectedProfile.state],
-                        ['District', selectedProfile.district],
-                        ['Village', selectedProfile.village],
-                        ['Land Holding', selectedProfile.totalLandHolding],
-                        ['Irrigation', selectedProfile.irrigationAvailability],
-                        ['Experience', `${selectedProfile.farmingExperience} years`],
-                        ['Updated', new Date(selectedProfile.updatedAt).toLocaleString()],
+                        ['Crop', selectedRecord.cropName],
+                        ['Season', selectedRecord.cropSeason],
+                        ['Area Cultivated', selectedRecord.areaCultivated],
+                        ['Soil Type', selectedRecord.soilType],
+                        ['Previous Yield', selectedRecord.previousYield],
+                        ['Current Yield', selectedRecord.currentYield],
+                        ['Fertilizer Usage', selectedRecord.fertilizerUsage],
+                        ['Irrigation Source', selectedRecord.irrigationSource],
+                        ['Pest Incidents', selectedRecord.pestIncidents],
+                        ['Annual Income', selectedRecord.annualFarmIncome],
+                        ['Yield Change', selectedRecord.yieldChange],
+                        ['Productivity Score', selectedRecord.productivityScore],
                       ].map(([label, value]) => (
                         <div key={label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                           <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{label}</p>
@@ -636,7 +700,7 @@ function App() {
                     </div>
                   ) : (
                     <p className="mt-5 text-sm leading-7 text-slate-400">
-                      Select a record from the list to view the full farmer profile.
+                      Select a record from the dashboard to inspect the full farm record details.
                     </p>
                   )}
                 </div>
@@ -647,8 +711,8 @@ function App() {
           <section className="mt-8 rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-8">
             <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Farmer records</p>
-                <h2 className="mt-1 text-2xl font-semibold text-white">Stored profiles</h2>
+                <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Dashboard</p>
+                <h2 className="mt-1 text-2xl font-semibold text-white">Saved farm records</h2>
               </div>
               {loadingList && <LoaderCircle className="h-5 w-5 animate-spin text-emerald-300" />}
             </div>
@@ -663,18 +727,18 @@ function App() {
                     />
                   ))}
                 </div>
-              ) : profiles.length === 0 ? (
+              ) : records.length === 0 ? (
                 <div className="rounded-[1.5rem] border border-dashed border-white/15 bg-slate-950/40 p-8 text-center text-slate-400">
-                  No farmer profiles found. Create the first profile to begin.
+                  No farm records yet. Use the multi-step form to create the first one.
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {profiles.map((profile) => {
-                    const isSelected = selectedProfile?.id === profile.id
+                  {records.map((record) => {
+                    const isSelected = selectedRecord?.id === record.id
 
                     return (
                       <article
-                        key={profile.id}
+                        key={record.id}
                         className={`rounded-[1.5rem] border p-5 shadow-lg shadow-black/10 transition hover:-translate-y-1 ${
                           isSelected
                             ? 'border-emerald-400/40 bg-emerald-400/10'
@@ -683,27 +747,27 @@ function App() {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <p className="text-lg font-semibold text-white">{profile.farmerName}</p>
+                            <p className="text-lg font-semibold text-white">{record.cropName}</p>
                             <p className="mt-1 text-sm text-slate-400">
-                              {profile.district}, {profile.state}
+                              {record.cropSeason} season
                             </p>
                           </div>
                           <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                            {profile.gender}
+                            {record.productivityScore}
                           </div>
                         </div>
 
                         <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-300">
-                          <MiniStat label="Age" value={profile.age} />
-                          <MiniStat label="Experience" value={`${profile.farmingExperience} yrs`} />
-                          <MiniStat label="Land" value={profile.totalLandHolding} />
-                          <MiniStat label="Irrigation" value={profile.irrigationAvailability} />
+                          <MiniStat label="Area" value={record.areaCultivated} />
+                          <MiniStat label="Income" value={record.annualFarmIncome} />
+                          <MiniStat label="Yield Change" value={record.yieldChange} />
+                          <MiniStat label="Pests" value={record.pestIncidents} />
                         </div>
 
                         <div className="mt-5 flex flex-wrap gap-3">
                           <button
                             type="button"
-                            onClick={() => openProfile(profile.id)}
+                            onClick={() => viewRecord(record.id)}
                             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition hover:bg-white/10"
                           >
                             <Eye className="h-4 w-4" />
@@ -711,7 +775,7 @@ function App() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => fillFormForEdit(profile)}
+                            onClick={() => fillFormForEdit(record)}
                             className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-200 transition hover:bg-emerald-400/20"
                           >
                             <PencilLine className="h-4 w-4" />
@@ -719,11 +783,11 @@ function App() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => deleteProfile(profile)}
-                            disabled={deletingId === profile.id}
+                            onClick={() => deleteRecord(record)}
+                            disabled={deletingId === record.id}
                             className="inline-flex items-center gap-2 rounded-full border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-sm text-rose-200 transition hover:bg-rose-400/20 disabled:cursor-not-allowed disabled:opacity-70"
                           >
-                            {deletingId === profile.id ? (
+                            {deletingId === record.id ? (
                               <LoaderCircle className="h-4 w-4 animate-spin" />
                             ) : (
                               <Trash2 className="h-4 w-4" />

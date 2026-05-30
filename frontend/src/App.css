@@ -1,4 +1,4 @@
-/* Tailwind handles the visual styling for the landing page. */
+/* Tailwind handles most of the layout; these input styles keep the form crisp. */
 .input-field {
 	width: 100%;
 	border-radius: 1rem;

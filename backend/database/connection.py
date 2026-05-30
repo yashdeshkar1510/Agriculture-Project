@@ -18,5 +18,9 @@ def get_farmer_profile_collection():
     return database["farmer_profiles"]
 
 
+def get_farm_record_collection():
+    return database["farm_records"]
+
+
 async def close_mongo_connection():
     mongo_client.close()
