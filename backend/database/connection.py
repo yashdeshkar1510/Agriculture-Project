@@ -26,5 +26,9 @@ def get_weather_history_collection():
     return database["weather_history"]
 
 
+def get_loan_applications_collection():
+    return database["loan_applications"]
+
+
 async def close_mongo_connection():
     mongo_client.close()

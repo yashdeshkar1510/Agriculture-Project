@@ -2,6 +2,9 @@ from typing import Tuple
 from math import floor
 
 from backend.models.loan import LoanRequest, LoanRecommendationResponse
+from bson import ObjectId
+from database.connection import get_loan_applications_collection
+from datetime import datetime, timezone
 
 
 def _score_risk(credit_score: int | None, years_farming: float, existing_debt: float, income: float) -> Tuple[float, str]:
@@ -83,3 +86,43 @@ def recommend_loan(payload: LoanRequest) -> LoanRecommendationResponse:
     )
 
     return rec
+
+
+async def apply_for_loan(payload: LoanRequest) -> dict:
+    """Compute recommendation and persist a loan application record with status 'pending'."""
+    rec = recommend_loan(payload)
+
+    now = datetime.now(timezone.utc)
+    doc = {
+        "applicant": {
+            "annual_income": payload.annual_income,
+            "farm_size_hectares": payload.farm_size_hectares,
+            "credit_score": payload.credit_score,
+            "years_farming": payload.years_farming,
+            "existing_debt": payload.existing_debt,
+        },
+        "recommendation": rec.dict(),
+        "status": "pending",
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    result = await get_loan_applications_collection().insert_one(doc)
+    saved = await get_loan_applications_collection().find_one({"_id": result.inserted_id})
+    saved["id"] = str(saved["_id"])
+    return saved
+
+
+async def list_loan_applications(limit: int = 50) -> list[dict]:
+    docs = await get_loan_applications_collection().find().sort("created_at", -1).to_list(length=limit)
+    for d in docs:
+        d["id"] = str(d["_id"])
+    return docs
+
+
+async def update_loan_application_status(application_id: str, status: str) -> None:
+    if not ObjectId.is_valid(application_id):
+        raise ValueError("invalid id")
+
+    result = await get_loan_applications_collection().update_one({"_id": ObjectId(application_id)}, {"$set": {"status": status, "updated_at": datetime.now(timezone.utc)}})
+    return result

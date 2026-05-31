@@ -16,6 +16,8 @@ from routes.farmer_profiles import router as farmer_profiles_router
 from routes.farm_records import router as farm_records_router
 from routes.weather import router as weather_router
 from routes.loan import router as loan_router
+from routes.loan_applications import router as loan_applications_router
+from routes.bank import router as bank_router
 
 
 def _cors_origins() -> list[str]:
@@ -58,6 +60,8 @@ app.include_router(farmer_profiles_router)
 app.include_router(farm_records_router)
 app.include_router(weather_router)
 app.include_router(loan_router)
+app.include_router(loan_applications_router)
+app.include_router(bank_router)
 
 
 @app.get("/")

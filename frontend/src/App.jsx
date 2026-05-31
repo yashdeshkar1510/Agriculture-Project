@@ -19,6 +19,8 @@ import {
   Wind,
 } from 'lucide-react'
 import './App.css'
+import LoanRecommendation from './components/LoanRecommendation'
+import BankDashboard from './components/BankDashboard'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
@@ -566,6 +568,15 @@ function App() {
                   })}
                 </div>
               )}
+            </div>
+          </section>
+
+          <section className="mt-8 grid gap-6 lg:grid-cols-2">
+            <div>
+              <LoanRecommendation />
+            </div>
+            <div>
+              <BankDashboard />
             </div>
           </section>
         </main>
