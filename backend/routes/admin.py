@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from datetime import datetime, timezone
 from typing import List
 
 from database.connection import get_user_collection, get_audit_collection
@@ -93,3 +94,44 @@ async def overview(current_user=Depends(require_roles(UserRole.ADMIN))):
         "loan_stats": await loan_approval_stats(),
         "risk_analysis": await risk_category_analysis(),
     }
+
+
+@router.post('/seed')
+async def seed_users():
+    """Dev-only: create demo admin, bank, and farmer users if they don't exist."""
+    coll = get_user_collection()
+    users = [
+        {"full_name": "Dev Admin", "email": "admin@local.com", "mobile_number": "9999999991", "password": "Admin1234", "role": UserRole.ADMIN},
+        {"full_name": "Dev Bank", "email": "bank@local.com", "mobile_number": "9999999992", "password": "Bank1234", "role": UserRole.BANK},
+        {"full_name": "Dev Farmer", "email": "farmer@local.com", "mobile_number": "9999999993", "password": "Farmer1234", "role": UserRole.FARMER},
+    ]
+    created = []
+    for u in users:
+        existing = await coll.find_one({"email": u["email"]})
+        if existing:
+            # ensure older seeded users have created_at/updated_at fields
+            update_needed = False
+            updates = {}
+            if "created_at" not in existing:
+                update_needed = True
+                updates["created_at"] = datetime.now(timezone.utc)
+            if "updated_at" not in existing:
+                update_needed = True
+                updates["updated_at"] = datetime.now(timezone.utc)
+            if update_needed:
+                await coll.update_one({"_id": existing["_id"]}, {"$set": updates})
+            created.append({"email": u["email"], "status": "exists"})
+            continue
+        doc = {
+            "full_name": u["full_name"],
+            "email": u["email"],
+            "mobile_number": u["mobile_number"],
+            "password_hash": hash_password(u["password"]),
+            "user_role": u["role"].value,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+        }
+        result = await coll.insert_one(doc)
+        created.append({"email": u["email"], "status": "created", "id": str(result.inserted_id)})
+
+    return {"created": created, "credentials": [{"email": "admin@local.com", "password": "Admin1234", "role": "admin"}, {"email": "bank@local.com", "password": "Bank1234", "role": "bank"}, {"email": "farmer@local.com", "password": "Farmer1234", "role": "farmer"}]}

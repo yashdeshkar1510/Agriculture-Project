@@ -20,10 +20,11 @@ from routes.loan_applications import router as loan_applications_router
 from routes.bank import router as bank_router
 from routes.analytics import router as analytics_router
 from routes.admin import router as admin_router
+from routes.predict import router as predict_router
 
 
 def _cors_origins() -> list[str]:
-    raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+    raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5174")
     return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
 
 
@@ -66,6 +67,7 @@ app.include_router(loan_applications_router)
 app.include_router(bank_router)
 app.include_router(analytics_router)
 app.include_router(admin_router)
+app.include_router(predict_router)
 
 
 @app.get("/")
