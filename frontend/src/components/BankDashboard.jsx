@@ -6,7 +6,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const API = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
-export default function BankDashboard() {
+export default function BankDashboard({ authFetch }) {
   const [view, setView] = useState('overview')
   const [analytics, setAnalytics] = useState(null)
   const [farmers, setFarmers] = useState([])
@@ -15,7 +15,7 @@ export default function BankDashboard() {
   const [riskFilter, setRiskFilter] = useState('')
 
   const loadAnalytics = async () => {
-    const res = await fetch(`${API}/bank/analytics`)
+    const res = await authFetch(`${API}/bank/analytics`)
     const data = await res.json()
     setAnalytics(data)
   }
@@ -24,13 +24,13 @@ export default function BankDashboard() {
     const q = new URLSearchParams()
     if (search) q.set('search', search)
     if (riskFilter) q.set('risk', riskFilter)
-    const res = await fetch(`${API}/bank/farmers?${q.toString()}`)
+    const res = await authFetch(`${API}/bank/farmers?${q.toString()}`)
     const data = await res.json()
-    setFarmers(data)
+    setFarmers(data.items ?? data)
   }
 
   const loadApplications = async () => {
-    const res = await fetch(`${API}/loan/applications`)
+    const res = await authFetch(`${API}/loan/applications`)
     const data = await res.json()
     setApplications(data)
   }
@@ -42,15 +42,29 @@ export default function BankDashboard() {
   }, [])
 
   const approve = async (id) => {
-    await fetch(`${API}/loan/applications/${id}/approve`, { method: 'POST' })
+    await authFetch(`${API}/loan/applications/${id}/approve`, { method: 'POST' })
     await loadApplications()
     await loadAnalytics()
   }
 
   const reject = async (id) => {
-    await fetch(`${API}/loan/applications/${id}/reject`, { method: 'POST' })
+    await authFetch(`${API}/loan/applications/${id}/reject`, { method: 'POST' })
     await loadApplications()
     await loadAnalytics()
+  }
+
+  const exportApplications = async () => {
+    const res = await authFetch(`${API}/bank/export/applications`)
+    if (!res.ok) return
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'loan_applications.csv'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
   }
 
   const cards = useMemo(() => {

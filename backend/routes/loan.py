@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
-from backend.models.loan import LoanRequest, LoanRecommendationResponse
-from backend.services.loan import recommend_loan
+from models.loan import LoanRequest, LoanRecommendationResponse
+from services.loan import recommend_loan
 
 
 router = APIRouter(prefix="/loan", tags=["Loan Recommendation"])

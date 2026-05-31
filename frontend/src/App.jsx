@@ -21,10 +21,14 @@ import {
 import './App.css'
 import LoanRecommendation from './components/LoanRecommendation'
 import BankDashboard from './components/BankDashboard'
+import AnalyticsDashboard from './components/AnalyticsDashboard'
+import Login from './components/Login'
+import { useAuth } from './hooks/useAuth'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
 function App() {
+  const { token, saveToken, clearToken, authFetch } = useAuth()
   const [location, setLocation] = useState('')
   const [currentWeather, setCurrentWeather] = useState(null)
   const [history, setHistory] = useState([])
@@ -227,8 +231,17 @@ function App() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-              Powered by OpenWeather API and MongoDB history tracking
+            <div className="flex items-center gap-4">
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">Powered by OpenWeather API and MongoDB history tracking</div>
+              <div className="ml-auto">
+                {token ? (
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => clearToken()} className="rounded bg-rose-400/10 px-3 py-1 text-sm text-rose-300">Logout</button>
+                  </div>
+                ) : (
+                  <Login />
+                )}
+              </div>
             </div>
           </div>
         </header>
@@ -573,10 +586,13 @@ function App() {
 
           <section className="mt-8 grid gap-6 lg:grid-cols-2">
             <div>
-              <LoanRecommendation />
+              <LoanRecommendation authFetch={authFetch} />
             </div>
             <div>
-              <BankDashboard />
+              <BankDashboard authFetch={authFetch} />
+            </div>
+            <div>
+              <AnalyticsDashboard authFetch={authFetch} />
             </div>
           </section>
         </main>

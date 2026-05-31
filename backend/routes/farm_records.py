@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
-from backend.models.farm_record import FarmRecordCreate, FarmRecordResponse, FarmRecordUpdate
-from backend.services.farm_records import create_record, delete_record, get_record, list_records, update_record
+from models.farm_record import FarmRecordCreate, FarmRecordResponse, FarmRecordUpdate
+from services.farm_records import create_record, delete_record, get_record, list_records, update_record
 
 
 router = APIRouter(prefix="/farm-records", tags=["Farm Records"])

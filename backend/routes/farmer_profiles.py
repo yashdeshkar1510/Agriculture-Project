@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
-from backend.models.farmer_profile import FarmerProfileCreate, FarmerProfileResponse, FarmerProfileUpdate
-from backend.services.farmer_profiles import create_profile, delete_profile, get_profile, list_profiles, update_profile
+from models.farmer_profile import FarmerProfileCreate, FarmerProfileResponse, FarmerProfileUpdate
+from services.farmer_profiles import create_profile, delete_profile, get_profile, list_profiles, update_profile
 
 
 router = APIRouter(prefix="/farmers", tags=["Farmer Profiles"])

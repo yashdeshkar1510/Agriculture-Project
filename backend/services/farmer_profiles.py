@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from bson import ObjectId
 from fastapi import HTTPException, status
 
-from backend.database.connection import get_farmer_profile_collection
-from backend.models.farmer_profile import FarmerProfileCreate, FarmerProfileResponse, FarmerProfileUpdate
+from database.connection import get_farmer_profile_collection
+from models.farmer_profile import FarmerProfileCreate, FarmerProfileResponse, FarmerProfileUpdate
 
 
 def _serialize_profile(document: dict) -> FarmerProfileResponse:

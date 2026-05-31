@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, status
 
-from backend.models.weather import WeatherRecordResponse, WeatherSearchRequest
-from backend.services.weather import delete_weather_history_record, get_weather, list_weather_history
+from models.weather import WeatherRecordResponse, WeatherSearchRequest
+from services.weather import delete_weather_history_record, get_weather, list_weather_history
 
 
 router = APIRouter(prefix="/weather", tags=["Weather Intelligence"])

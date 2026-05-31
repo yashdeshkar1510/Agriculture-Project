@@ -9,8 +9,8 @@ from bson import ObjectId
 from fastapi import HTTPException, status
 from starlette.concurrency import run_in_threadpool
 
-from backend.database.connection import get_weather_history_collection
-from backend.models.weather import WeatherRecordResponse, WeatherSearchRequest
+from database.connection import get_weather_history_collection
+from models.weather import WeatherRecordResponse, WeatherSearchRequest
 
 
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")

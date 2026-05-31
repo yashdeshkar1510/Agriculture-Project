@@ -8,8 +8,8 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from backend.database.connection import get_user_collection
-from backend.models.auth import UserPublic, UserRole
+from database.connection import get_user_collection
+from models.auth import UserPublic, UserRole
 
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me-in-production")

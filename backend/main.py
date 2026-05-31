@@ -18,6 +18,7 @@ from routes.weather import router as weather_router
 from routes.loan import router as loan_router
 from routes.loan_applications import router as loan_applications_router
 from routes.bank import router as bank_router
+from routes.analytics import router as analytics_router
 
 
 def _cors_origins() -> list[str]:
@@ -62,6 +63,7 @@ app.include_router(weather_router)
 app.include_router(loan_router)
 app.include_router(loan_applications_router)
 app.include_router(bank_router)
+app.include_router(analytics_router)
 
 
 @app.get("/")

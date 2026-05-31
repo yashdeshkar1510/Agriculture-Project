@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
-from backend.database.connection import get_user_collection
-from backend.models.auth import LoginRequest, RegisterRequest, TokenResponse, UserPublic, UserRole
-from backend.services.auth import (
+from database.connection import get_user_collection
+from models.auth import LoginRequest, RegisterRequest, TokenResponse, UserPublic, UserRole
+from services.auth import (
     authenticate_user,
     create_access_token,
     get_current_user,

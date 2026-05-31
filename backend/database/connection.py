@@ -30,5 +30,9 @@ def get_loan_applications_collection():
     return database["loan_applications"]
 
 
+def get_audit_collection():
+    return database["audit_logs"]
+
+
 async def close_mongo_connection():
     mongo_client.close()

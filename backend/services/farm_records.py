@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from bson import ObjectId
 from fastapi import HTTPException, status
 
-from backend.database.connection import get_farm_record_collection
-from backend.models.farm_record import FarmRecordCreate, FarmRecordResponse, FarmRecordUpdate
+from database.connection import get_farm_record_collection
+from models.farm_record import FarmRecordCreate, FarmRecordResponse, FarmRecordUpdate
 
 
 def _serialize_record(document: dict) -> FarmRecordResponse:

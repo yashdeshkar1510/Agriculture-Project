@@ -1,10 +1,11 @@
 from typing import Tuple
 from math import floor
 
-from backend.models.loan import LoanRequest, LoanRecommendationResponse
+from models.loan import LoanRequest, LoanRecommendationResponse
 from bson import ObjectId
-from database.connection import get_loan_applications_collection
+from database.connection import get_loan_applications_collection, get_farmer_profile_collection
 from datetime import datetime, timezone
+from services.audit import log_action
 
 
 def _score_risk(credit_score: int | None, years_farming: float, existing_debt: float, income: float) -> Tuple[float, str]:
@@ -107,9 +108,21 @@ async def apply_for_loan(payload: LoanRequest) -> dict:
         "updated_at": now,
     }
 
+    # If a farmer_id was supplied and exists, attach reference
+    if getattr(payload, "farmer_id", None):
+        try:
+            fid = ObjectId(payload.farmer_id)
+            farmer = await get_farmer_profile_collection().find_one({"_id": fid})
+            if farmer:
+                doc["farmer_id"] = fid
+        except Exception:
+            pass
+
     result = await get_loan_applications_collection().insert_one(doc)
     saved = await get_loan_applications_collection().find_one({"_id": result.inserted_id})
     saved["id"] = str(saved["_id"])
+    # audit log
+    await log_action(actor="anonymous", action="apply_loan", resource=str(saved["id"]), details={"recommendation": rec.dict()})
     return saved
 
 
@@ -123,6 +136,9 @@ async def list_loan_applications(limit: int = 50) -> list[dict]:
 async def update_loan_application_status(application_id: str, status: str) -> None:
     if not ObjectId.is_valid(application_id):
         raise ValueError("invalid id")
-
+    # updated to set status
     result = await get_loan_applications_collection().update_one({"_id": ObjectId(application_id)}, {"$set": {"status": status, "updated_at": datetime.now(timezone.utc)}})
+    if result.matched_count == 0:
+        raise ValueError("Loan application not found.")
+    # audit log (actor resolved at route level)
     return result
