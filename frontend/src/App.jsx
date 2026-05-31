@@ -23,8 +23,12 @@ import LoanRecommendation from './components/LoanRecommendation'
 import BankDashboard from './components/BankDashboard'
 import AnalyticsDashboard from './components/AnalyticsDashboard'
 import AdminPanel from './components/AdminPanel'
+import ErrorBanner from './components/ErrorBanner'
+import { ErrorProvider } from './contexts/ErrorContext'
 import Login from './components/Login'
 import { useAuth } from './hooks/useAuth'
+import { listHistory as apiListHistory, searchWeather as apiSearchWeather, deleteHistory as apiDeleteHistory } from './api/weather'
+import { useError } from './contexts/ErrorContext'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
@@ -112,13 +116,7 @@ function App() {
     setLoadingHistory(true)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/weather/history?limit=8`)
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Unable to load weather history.')
-      }
-
+      const data = await apiListHistory({ limit: 8 })
       setHistory(data)
       setSelectedHistoryId((currentSelected) => {
         if (currentSelected && data.some((entry) => entry.id === currentSelected)) {
@@ -128,7 +126,7 @@ function App() {
       })
     } catch (error) {
       setMessageType('error')
-      setMessage(error.message)
+      setMessage(error.message || String(error))
     } finally {
       setLoadingHistory(false)
     }
@@ -152,18 +150,7 @@ function App() {
     setMessage('')
 
     try {
-      const response = await fetch(`${API_BASE_URL}/weather/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ location: trimmedLocation }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Unable to fetch weather data.')
-      }
-
+      const data = await apiSearchWeather({ location: trimmedLocation })
       setCurrentWeather(data)
       setSelectedHistoryId(data.id)
       setLocation('')
@@ -172,7 +159,7 @@ function App() {
       await loadHistory()
     } catch (error) {
       setMessageType('error')
-      setMessage(error.message)
+      setMessage(error.message || String(error))
     } finally {
       setLoadingCurrent(false)
     }
@@ -185,17 +172,7 @@ function App() {
     setDeletingId(record.id)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/weather/history/${record.id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.status !== 204) {
-        const data = await response.json()
-        if (!response.ok) {
-          throw new Error(data.detail || 'Unable to remove history item.')
-        }
-      }
-
+      await apiDeleteHistory(record.id)
       setMessageType('success')
       setMessage('Weather history entry removed successfully.')
       if (selectedHistoryId === record.id) {
@@ -205,14 +182,16 @@ function App() {
       await loadHistory()
     } catch (error) {
       setMessageType('error')
-      setMessage(error.message)
+      setMessage(error.message || String(error))
     } finally {
       setDeletingId('')
     }
   }
 
   return (
+    <ErrorProvider>
     <div className="min-h-screen bg-[#04141f] text-slate-100">
+      <ErrorBanner />
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.24),transparent_24%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.22),transparent_24%),linear-gradient(180deg,rgba(4,20,31,0.4),rgba(4,20,31,1))]" />
         <div className="pointer-events-none absolute left-0 top-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl animate-float-slow" />
@@ -602,6 +581,7 @@ function App() {
         </main>
       </div>
     </div>
+    </ErrorProvider>
   )
 }
 

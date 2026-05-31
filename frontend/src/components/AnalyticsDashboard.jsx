@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Bar, Pie, Line } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js'
+import { getOverview as apiOverview } from '../api/analytics'
+import { useError } from '../contexts/ErrorContext'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend)
 
@@ -8,13 +10,17 @@ const API = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
 export default function AnalyticsDashboard({ authFetch }) {
   const [data, setData] = useState(null)
+  const { showError } = useError()
   const [district, setDistrict] = useState('')
   const [crop, setCrop] = useState('')
 
   const load = async () => {
-    const res = authFetch ? await authFetch(`${API}/analytics/overview`) : await fetch(`${API}/analytics/overview`)
-    const json = await res.json()
-    setData(json)
+    try {
+      const json = await apiOverview()
+      setData(json)
+    } catch (err) {
+      showError(err)
+    }
   }
 
   useEffect(() => {

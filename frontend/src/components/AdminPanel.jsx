@@ -1,33 +1,41 @@
 import { useEffect, useState } from 'react'
+import { listUsers, createUser as apiCreateUser } from '../api/users'
+import { getAudit, getOverview } from '../api/admin'
+import { useError } from '../contexts/ErrorContext'
 
-export default function AdminPanel({ authFetch }) {
+export default function AdminPanel() {
   const [users, setUsers] = useState([])
   const [audits, setAudits] = useState([])
   const [overview, setOverview] = useState(null)
   const [loading, setLoading] = useState(false)
   const [newUser, setNewUser] = useState({ fullName: '', email: '', mobileNumber: '', password: '', confirmPassword: '', userRole: 'bank' })
-
-  const API = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+  const { showError } = useError()
 
   const loadUsers = async () => {
-    const res = await authFetch(`${API}/admin/users`)
-    if (!res.ok) return
-    const json = await res.json()
-    setUsers(json.items || json)
+    try {
+      const res = await listUsers({ limit: 200 })
+      setUsers(res.items || res)
+    } catch (err) {
+      showError(err)
+    }
   }
 
   const loadAudits = async () => {
-    const res = await authFetch(`${API}/admin/audit`)
-    if (!res.ok) return
-    const json = await res.json()
-    setAudits(json.items || json)
+    try {
+      const res = await getAudit({ limit: 200 })
+      setAudits(res.items || res)
+    } catch (err) {
+      showError(err)
+    }
   }
 
   const loadOverview = async () => {
-    const res = await authFetch(`${API}/admin/overview`)
-    if (!res.ok) return
-    const json = await res.json()
-    setOverview(json)
+    try {
+      const res = await getOverview()
+      setOverview(res)
+    } catch (err) {
+      showError(err)
+    }
   }
 
   useEffect(() => {
@@ -41,12 +49,11 @@ export default function AdminPanel({ authFetch }) {
     setLoading(true)
     try {
       const payload = { ...newUser }
-      const res = await authFetch(`${API}/admin/users`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      if (!res.ok) throw new Error('Failed')
+      await apiCreateUser(payload)
       await loadUsers()
       setNewUser({ fullName: '', email: '', mobileNumber: '', password: '', confirmPassword: '', userRole: 'bank' })
     } catch (err) {
-      console.error(err)
+      showError(err)
     } finally {
       setLoading(false)
     }

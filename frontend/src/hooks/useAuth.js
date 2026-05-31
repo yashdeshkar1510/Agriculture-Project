@@ -1,26 +1,32 @@
 import { useState } from 'react'
+import axiosInstance, { setAuthToken } from '../api/axios'
 
 const STORAGE_KEY = 'agro_access_token'
 
 export function useAuth() {
-  const [token, setToken] = useState(localStorage.getItem(STORAGE_KEY) || '')
+  const [token, setTokenState] = useState(localStorage.getItem(STORAGE_KEY) || '')
 
   function saveToken(t) {
-    localStorage.setItem(STORAGE_KEY, t)
-    setToken(t)
+    setAuthToken(t)
+    setTokenState(t)
   }
 
   function clearToken() {
-    localStorage.removeItem(STORAGE_KEY)
-    setToken('')
+    setAuthToken('')
+    setTokenState('')
   }
 
   function authFetch(url, opts = {}) {
-    const headers = opts.headers || {}
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
+    // adapt to axios: support same signature convenience
+    const method = (opts.method || 'get').toLowerCase()
+    const config = {
+      url,
+      method,
+      headers: opts.headers || {},
     }
-    return fetch(url, {...opts, headers})
+    if (opts.body) config.data = opts.body
+    if (opts.params) config.params = opts.params
+    return axiosInstance.request(config)
   }
 
   return { token, saveToken, clearToken, authFetch }

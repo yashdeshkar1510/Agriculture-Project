@@ -1,29 +1,22 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
-
-const API = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+import { login } from '../api/auth'
+import { useError } from '../contexts/ErrorContext'
 
 export default function Login() {
   const { saveToken } = useAuth()
+  const { showError } = useError()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('bank')
-  const [error, setError] = useState('')
 
   const submit = async (e) => {
     e.preventDefault()
-    setError('')
     try {
-      const res = await fetch(`${API}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, userRole: role }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.detail || 'Login failed')
-      saveToken(data.accessToken)
+      const data = await login({ email, password, userRole: role })
+      saveToken(data.accessToken || data.access_token)
     } catch (err) {
-      setError(err.message || String(err))
+      showError(err)
     }
   }
 
@@ -36,7 +29,6 @@ export default function Login() {
         <option value="farmer">Farmer</option>
       </select>
       <button type="submit" className="rounded bg-emerald-400 px-3 py-2 font-semibold text-slate-950">Login</button>
-      {error && <div className="text-rose-300">{error}</div>}
     </form>
   )
 }

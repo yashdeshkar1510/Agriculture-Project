@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js'
 import { Line } from 'react-chartjs-2'
+import { getRecommendation } from '../api/recommendation'
+import { useError } from '../contexts/ErrorContext'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
@@ -11,6 +13,7 @@ export default function LoanRecommendation({ authFetch }) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
+  const { showError } = useError()
 
   const onChange = (e) => setForm((s) => ({ ...s, [e.target.name]: e.target.value }))
 
@@ -28,18 +31,10 @@ export default function LoanRecommendation({ authFetch }) {
         years_farming: form.years_farming ? Number(form.years_farming) : 0,
         existing_debt: form.existing_debt ? Number(form.existing_debt) : 0,
       }
-
-      const res = await fetch(`${API_BASE}/loan/recommendation`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.detail || 'Failed to get recommendation')
+      const data = await getRecommendation(payload)
       setResult(data)
     } catch (err) {
-      setError(err.message || String(err))
+      showError(err)
     } finally {
       setLoading(false)
     }
