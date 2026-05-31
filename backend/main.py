@@ -4,17 +4,18 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.database.connection import (
+from database.connection import (
     close_mongo_connection,
     get_farm_record_collection,
     get_farmer_profile_collection,
     get_weather_history_collection,
     get_user_collection,
 )
-from backend.routes.auth import router as auth_router
-from backend.routes.farmer_profiles import router as farmer_profiles_router
-from backend.routes.farm_records import router as farm_records_router
-from backend.routes.weather import router as weather_router
+from routes.auth import router as auth_router
+from routes.farmer_profiles import router as farmer_profiles_router
+from routes.farm_records import router as farm_records_router
+from routes.weather import router as weather_router
+from routes.loan import router as loan_router
 
 
 def _cors_origins() -> list[str]:
@@ -56,6 +57,7 @@ app.include_router(auth_router)
 app.include_router(farmer_profiles_router)
 app.include_router(farm_records_router)
 app.include_router(weather_router)
+app.include_router(loan_router)
 
 
 @app.get("/")
