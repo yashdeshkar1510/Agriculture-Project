@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, mo
 class UserRole(str, Enum):
     FARMER = "farmer"
     BANK = "bank"
+    ADMIN = "admin"
 
 
 class RegisterRequest(BaseModel):

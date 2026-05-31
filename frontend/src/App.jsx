@@ -22,6 +22,7 @@ import './App.css'
 import LoanRecommendation from './components/LoanRecommendation'
 import BankDashboard from './components/BankDashboard'
 import AnalyticsDashboard from './components/AnalyticsDashboard'
+import AdminPanel from './components/AdminPanel'
 import Login from './components/Login'
 import { useAuth } from './hooks/useAuth'
 
@@ -593,6 +594,9 @@ function App() {
             </div>
             <div>
               <AnalyticsDashboard authFetch={authFetch} />
+            </div>
+            <div>
+              <AdminPanel authFetch={authFetch} />
             </div>
           </section>
         </main>
